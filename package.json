@@ -1,6 +1,6 @@
 {
   "name": "lightup",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Light Up: an IDEMS educational puzzle game (Angular + Capacitor).",
   "license": "MIT",
   "scripts": {
