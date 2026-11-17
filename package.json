@@ -1,6 +1,6 @@
 {
   "name": "lightup",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Light Up: an IDEMS educational puzzle game (Angular + Capacitor).",
   "license": "MIT",
   "scripts": {
@@ -10,8 +10,9 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "apk": "node tools/build-apk.mjs",
+    "aab": "node tools/build-aab.mjs",
     "version": "node games-common-core/ios-release/ios-version.mjs && git add ios/App/App.xcodeproj/project.pbxproj",
-    "app-images": "capacitor-assets generate --android --ios --assetPath assets/app --iconBackgroundColor \"#fffdf8\" --iconBackgroundColorDark \"#fffdf8\" --splashBackgroundColor \"#f6f3ed\" --splashBackgroundColorDark \"#f6f3ed\""
+    "app-images": "capacitor-assets generate --android --ios --assetPath assets/app --iconBackgroundColor #fffdf8 --iconBackgroundColorDark #fffdf8 --splashBackgroundColor #f6f3ed --splashBackgroundColorDark #f6f3ed"
   },
   "private": true,
   "packageManager": "npm@11.19.1",
