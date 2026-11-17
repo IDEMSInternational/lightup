@@ -3,8 +3,8 @@ import { BLACK, WHITE } from './description';
 /** What the player has put on a white square. */
 export const EMPTY = 0;
 export const LIGHT = 1;
-/** A note: "no light here". Dots never count towards the solution. */
-export const DOT = 2;
+/** A note: "no light here". Crosses never count towards the solution. */
+export const CROSS = 2;
 
 export interface Point {
   x: number;
@@ -20,7 +20,7 @@ export interface Size {
 export interface LightUpState extends Size {
   /** Each square, indexed y * w + x: WHITE, BLACK, or a black square's number (0 to 4). */
   readonly squares: Int8Array;
-  /** The player's EMPTY, LIGHT or DOT on each white square (EMPTY on black ones). */
+  /** The player's EMPTY, LIGHT or CROSS on each white square (EMPTY on black ones). */
   readonly marks: Uint8Array;
   readonly completed: boolean;
   /** True once the player has used "Solve". */
@@ -110,7 +110,7 @@ export function findMistakes(state: LightUpState, lit = litCounts(state)): Mista
 /**
  * True when the lights solve the puzzle: every white square lit, no light
  * shining on another, and every number with exactly that many lights next
- * to it. Dots don't matter.
+ * to it. Crosses don't matter.
  */
 export function isSolved(state: LightUpState): boolean {
   const lit = litCounts(state);

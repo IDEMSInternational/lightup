@@ -74,14 +74,17 @@
   }
 }
 
-.dot {
-  fill: var(--ink);
-  opacity: 0.6;
+.cross {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 0.06;
+  stroke-linecap: round;
+  opacity: 0.55;
   pointer-events: none;
 
-  /* While dragging: dots being added, and dots being taken off. */
+  /* While swiping: a cross being added, and one being taken off. */
   &.new {
-    fill: var(--accent);
+    stroke: var(--accent);
     opacity: 0.9;
   }
 

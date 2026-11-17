@@ -10,8 +10,8 @@ may shine on another. A numbered black square must have exactly that many
 lights next to it (above, below, left and right).
 
 - Tap a white square to place a light; tap a light to remove it.
-- Swipe a little inside a square to mark it with a dot ("no light here");
-  a swipe or a tap on a dot removes it. Dots are
+- Swipe a little inside a square to mark it with a cross ("no light here");
+  a swipe or a tap on a cross removes it. Crosses are
   notes only: the puzzle is solved by the lights alone.
 - Sizes 5×5 to 10×10, or a custom size up to 15×15, at Easy, Medium and Hard
   (the original's Easy, Tricky and Hard). Not 4×4: the original generator can

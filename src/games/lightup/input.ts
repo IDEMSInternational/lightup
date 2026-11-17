@@ -1,6 +1,6 @@
 import { WHITE } from './description';
 import { LightUpMove } from './moves';
-import { DOT, EMPTY, LightUpState, Point, Size } from './state';
+import { CROSS, EMPTY, LightUpState, Point, Size } from './state';
 
 /** The square under a position given in squares (e.g. 2.4, 0.9), clamped to the board. */
 export function squareAt(size: Size, x: number, y: number): Point {
@@ -12,15 +12,15 @@ export function squareAt(size: Size, x: number, y: number): Point {
 
 /**
  * How far (in squares) the finger may wander and still make a tap. Further
- * makes a swipe, which puts a dot on the square.
+ * makes a swipe, which puts a cross on the square.
  */
 export const DEFAULT_SLOP = 0.25;
 
 /**
  * One touch on the board, which acts on the square where it starts only.
- * A tap on an empty white square places a light; a tap on a light or a dot
- * takes it off. A short swipe puts a dot ("no light here") on an empty
- * white square, or takes a dot off. Positions are in squares.
+ * A tap on an empty white square places a light; a tap on a light or a cross
+ * takes it off. A short swipe puts a cross ("no light here") on an empty
+ * white square, or takes a cross off. Positions are in squares.
  */
 export class LightUpTouch {
   private readonly state: LightUpState;
@@ -55,8 +55,8 @@ export class LightUpTouch {
     if (this.state.squares[at.y * this.state.w + at.x] !== WHITE) return null; // a black square
     const mark = this.mark;
     if (this.isSwipe) {
-      if (mark === EMPTY) return { kind: 'dot', at };
-      return mark === DOT ? { kind: 'clear', at } : null; // a swipe leaves a light alone
+      if (mark === EMPTY) return { kind: 'cross', at };
+      return mark === CROSS ? { kind: 'clear', at } : null; // a swipe leaves a light alone
     }
     return mark === EMPTY ? { kind: 'light', at } : { kind: 'clear', at };
   }

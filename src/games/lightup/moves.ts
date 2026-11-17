@@ -1,12 +1,12 @@
-import { DOT, EMPTY, LIGHT, LightUpState, Point, isSolved, isWhite } from './state';
+import { CROSS, EMPTY, LIGHT, LightUpState, Point, isSolved, isWhite } from './state';
 
 export type LightUpMove =
   /** Put a light on an empty white square (a tap). */
   | { kind: 'light'; at: Point }
-  /** Take a light or a dot off a square (a tap, or a swipe on a dot). */
+  /** Take a light or a cross off a square (a tap, or a swipe on a cross). */
   | { kind: 'clear'; at: Point }
-  /** Put a dot on an empty white square (a short swipe). */
-  | { kind: 'dot'; at: Point }
+  /** Put a cross on an empty white square (a short swipe). */
+  | { kind: 'cross'; at: Point }
   /** Replace everything with the solution's lights (marks the game as cheated). */
   | { kind: 'solve'; lights: readonly Point[] };
 
@@ -29,10 +29,10 @@ export function applyMove(state: LightUpState, move: LightUpMove): LightUpState 
       marks[i] = EMPTY;
       break;
     }
-    case 'dot': {
+    case 'cross': {
       const i = index(move.at);
       if (i < 0 || marks[i] !== EMPTY) return null;
-      marks[i] = DOT;
+      marks[i] = CROSS;
       break;
     }
     case 'solve': {

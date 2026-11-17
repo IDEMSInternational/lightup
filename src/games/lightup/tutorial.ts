@@ -2,7 +2,7 @@ import { Tutorial } from '@studio/engine/tutorial';
 import { BLACK, WHITE, encodeDescription } from './description';
 import { LightUpMove } from './moves';
 import { EASY, LightUpParams, defaultParams } from './params';
-import { DOT, LIGHT, LightUpState, Point } from './state';
+import { CROSS, LIGHT, LightUpState, Point } from './state';
 
 /** Guidance on the board: a square to tap or swipe on, with an optional note. */
 export interface LightUpHint {
@@ -37,7 +37,7 @@ const FIRST_LIGHT: Point = { x: 1, y: 0 };
 const SECOND_LIGHT: Point = { x: 0, y: 1 };
 /** A deliberate mistake: a light in the first light's row. */
 const CLASHING: Point = { x: 3, y: 0 };
-/** The 0's neighbours, dotted one at a time. */
+/** The 0's neighbours, crossed one at a time. */
 const BESIDE_ZERO: Point[] = [
   { x: 3, y: 4 },
   { x: 4, y: 3 },
@@ -48,7 +48,7 @@ const same = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 
 /**
  * Teaches by doing, one action per step: place a light, place a second one
- * for a number, place a wrong one, remove it, mark squares with dots, then
+ * for a number, place a wrong one, remove it, mark squares with crosses, then
  * finish the puzzle alone.
  */
 export const lightUpTutorial: Tutorial<LightUpParams, LightUpState, LightUpMove, LightUpHint> = {
@@ -86,13 +86,13 @@ export const lightUpTutorial: Tutorial<LightUpParams, LightUpState, LightUpMove,
     {
       text:
         'The 0 means no lights next to it. Swipe a little inside each of its neighbours to mark it ' +
-        'with a dot, as a reminder that no light goes there.',
+        'with a cross, as a reminder that no light goes there.',
       hint: (state) => {
-        const next = BESIDE_ZERO.find((p) => markAt(state, p) !== DOT);
+        const next = BESIDE_ZERO.find((p) => markAt(state, p) !== CROSS);
         return next && { square: next, gesture: 'swipe' };
       },
-      expect: (move) => move.kind === 'dot' && BESIDE_ZERO.some((p) => same(p, move.at)),
-      done: (state) => BESIDE_ZERO.every((p) => markAt(state, p) === DOT),
+      expect: (move) => move.kind === 'cross' && BESIDE_ZERO.some((p) => same(p, move.at)),
+      done: (state) => BESIDE_ZERO.every((p) => markAt(state, p) === CROSS),
     },
     {
       text: 'Now finish the puzzle yourself.',
