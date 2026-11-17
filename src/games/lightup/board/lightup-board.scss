@@ -7,6 +7,8 @@
    * oranges, which are kept for "Show mistakes" and the app's buttons.
    */
   --lit: #fff1b8;
+  /* Lit only by tentative (thinking-mode) lights: a paler yellow. */
+  --lit-maybe: #fff8dc;
   --bulb: #f7c531;
   --bulb-edge: #a87f00;
   --glow: rgb(247 197 49 / 0.35);
@@ -17,6 +19,7 @@
 /* The dark theme: a dim warm light, bright bulbs, black squares darker than the board. */
 :host-context([data-theme='dark']) {
   --lit: #4a4126;
+  --lit-maybe: #36321f;
   --bulb: #ffd54f;
   --bulb-edge: #ffe48a;
   --glow: rgb(255 213 79 / 0.25);
@@ -26,6 +29,10 @@
 
 .lit {
   fill: var(--lit);
+
+  &.maybe {
+    fill: var(--lit-maybe);
+  }
 }
 
 .black {
@@ -61,6 +68,20 @@
     stroke-width: 0.05;
   }
 
+  /* A tentative light (thinking mode): a pale bulb with a dotted edge. */
+  &.tentative {
+    .glow {
+      fill: none;
+    }
+
+    .bulb {
+      fill: var(--lit-maybe);
+      stroke-width: 0.07;
+      stroke-dasharray: 0.001 0.12;
+      stroke-linecap: round;
+    }
+  }
+
   /* "Show mistakes": this light shines on another. */
   &.wrong {
     .glow {
@@ -90,5 +111,11 @@
 
   &.going {
     opacity: 0.15;
+  }
+
+  /* A tentative cross (thinking mode): dotted arms. */
+  &.tentative {
+    stroke-width: 0.075;
+    stroke-dasharray: 0.001 0.09;
   }
 }

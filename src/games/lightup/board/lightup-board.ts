@@ -36,6 +36,8 @@ export class LightUpBoard {
   readonly state = input.required<LightUpState>();
   /** Tutorial guidance: highlights squares and animates the gesture. */
   readonly hint = input<LightUpHint | null>(null);
+  /** Thinking mode: new lights and crosses are tentative, drawn dotted. */
+  readonly thinking = input(false);
   /** Show mistakes: lights shining on each other, and numbers that can't be right, in red. */
   readonly showMistakes = input(false);
   readonly move = output<LightUpMove>();
@@ -64,15 +66,17 @@ export class LightUpBoard {
   protected readonly view = computed(() => {
     const state = this.state();
     const lit = litCounts(state);
+    const surelyLit = litCounts(state, true);
     const mistakes = this.showMistakes() ? findMistakes(state, lit) : null;
     const swipe = this.swipe();
     const swiped = swipe ? swipe.y * state.w + swipe.x : -1;
 
     const blacks: { x: number; y: number; number: number | null; wrong: boolean }[] = [];
-    const litSquares: Point[] = [];
-    const lights: { x: number; y: number; wrong: boolean }[] = [];
-    const crosses: { x: number; y: number; going: boolean }[] = [];
-    const newCrosses: Point[] = [];
+    /** `maybe`: lit only by tentative lights. */
+    const litSquares: { x: number; y: number; maybe: boolean }[] = [];
+    const lights: { x: number; y: number; wrong: boolean; tentative: boolean }[] = [];
+    const crosses: { x: number; y: number; going: boolean; tentative: boolean }[] = [];
+    const newCrosses: { x: number; y: number; tentative: boolean }[] = [];
 
     state.squares.forEach((square, i) => {
       const x = i % state.w;
@@ -86,11 +90,13 @@ export class LightUpBoard {
         });
         return;
       }
-      if (lit[i] > 0) litSquares.push({ x, y });
+      if (lit[i] > 0) litSquares.push({ x, y, maybe: surelyLit[i] === 0 });
       const mark = state.marks[i];
-      if (mark === LIGHT) lights.push({ x, y, wrong: !!mistakes?.lights.has(i) });
-      else if (mark === CROSS) crosses.push({ x, y, going: i === swiped });
-      else if (mark === EMPTY && i === swiped) newCrosses.push({ x, y });
+      const tentative = state.tentative[i] === 1;
+      if (mark === LIGHT) lights.push({ x, y, wrong: !!mistakes?.lights.has(i), tentative });
+      else if (mark === CROSS) crosses.push({ x, y, going: i === swiped, tentative });
+      else if (mark === EMPTY && i === swiped)
+        newCrosses.push({ x, y, tentative: this.thinking() });
     });
     return { blacks, litSquares, lights, crosses, newCrosses };
   });
@@ -130,7 +136,10 @@ export class LightUpBoard {
     if (event.button !== 0) return;
     event.preventDefault();
     this.svg().nativeElement.setPointerCapture(event.pointerId);
-    this.touch = new LightUpTouch(this.state(), this.pointUnder(event), this.slop());
+    this.touch = new LightUpTouch(this.state(), this.pointUnder(event), {
+      slop: this.slop(),
+      thinking: this.thinking(),
+    });
   }
 
   protected onPointerMove(event: PointerEvent): void {

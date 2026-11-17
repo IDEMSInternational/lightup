@@ -13,6 +13,10 @@ lights next to it (above, below, left and right).
 - Swipe a little inside a square to mark it with a cross ("no light here");
   a swipe or a tap on a cross removes it. Crosses are
   notes only: the puzzle is solved by the lights alone.
+- **Thinking** mode, to try out a hypothesis: lights and crosses placed
+  while it's on are dotted (and squares lit only by dotted lights are
+  paler), while solid ones can't be changed. **Keep** makes the dotted
+  ones solid; **Discard** removes them.
 - Sizes 5×5 to 10×10, or a custom size up to 15×15, at Easy, Medium and Hard
   (the original's Easy, Tricky and Hard). Not 4×4: the original generator can
   never make a Hard puzzle that small.

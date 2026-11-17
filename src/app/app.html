@@ -12,9 +12,27 @@
     <puzzle-shell [controls]="play" (back)="s.goHome()" (help)="s.startTutorial()">
       <lightup-board
         [state]="play.state()"
+        [thinking]="thinking()"
         [showMistakes]="play.showMistakes()"
         (move)="play.move($event)"
       />
+
+      <div puzzleTools class="thinking">
+        <puzzle-switch
+          [(checked)]="thinking"
+          description="Lights and crosses are dotted, to try out an idea"
+        >
+          Thinking
+        </puzzle-switch>
+        @if (thinking() || hasThoughts()) {
+          <button type="button" (click)="resolveThoughts(true)" [disabled]="!hasThoughts()">
+            Keep
+          </button>
+          <button type="button" (click)="resolveThoughts(false)" [disabled]="!hasThoughts()">
+            Discard
+          </button>
+        }
+      </div>
     </puzzle-shell>
   } @else {
     <puzzle-home [controls]="s" />

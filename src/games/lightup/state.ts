@@ -22,6 +22,12 @@ export interface LightUpState extends Size {
   readonly squares: Int8Array;
   /** The player's EMPTY, LIGHT or CROSS on each white square (EMPTY on black ones). */
   readonly marks: Uint8Array;
+  /**
+   * 1 for each light or cross placed in thinking mode (drawn dotted): part
+   * of a hypothesis the player may keep or discard. Tentative lights still
+   * count towards the solution.
+   */
+  readonly tentative: Uint8Array;
   readonly completed: boolean;
   /** True once the player has used "Solve". */
   readonly cheated: boolean;
@@ -51,12 +57,13 @@ export function neighbours(size: Size, i: number): number[] {
 /**
  * How many lights shine on each white square: a light shines on its own
  * square and along its row and column until a black square or the edge.
+ * With `sureOnly`, tentative (thinking-mode) lights are left out.
  */
-export function litCounts(state: LightUpState): Int32Array {
+export function litCounts(state: LightUpState, sureOnly = false): Int32Array {
   const { w, h } = state;
   const counts = new Int32Array(w * h);
   state.marks.forEach((mark, i) => {
-    if (mark !== LIGHT) return;
+    if (mark !== LIGHT || (sureOnly && state.tentative[i])) return;
     counts[i]++;
     const x = i % w;
     const y = Math.floor(i / w);
@@ -90,6 +97,10 @@ export interface Mistakes {
   readonly numbers: ReadonlySet<number>;
 }
 
+/**
+ * Finds rule breaks. Tentative (thinking-mode) lights count like the
+ * others, since they count towards the solution.
+ */
 export function findMistakes(state: LightUpState, lit = litCounts(state)): Mistakes {
   const lights = new Set<number>();
   const numbers = new Set<number>();
