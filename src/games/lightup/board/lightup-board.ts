@@ -44,8 +44,8 @@ export class LightUpBoard {
   private touch: LightUpTouch | null = null;
   /** The id of this board's clip path (unique: the tutorial and the game may both have a board). */
   protected readonly clipId = `lightup-paper-${++boards}`;
-  /** The drag in progress: the squares it crosses, and whether it takes dots off. */
-  protected readonly drag = signal<{ squares: readonly Point[]; erasing: boolean } | null>(null);
+  /** The square of the swipe in progress, which gains or loses a dot when the finger lifts. */
+  protected readonly swipe = signal<Point | null>(null);
 
   protected readonly viewBox = computed(() => {
     const { w, h } = this.state();
@@ -65,8 +65,8 @@ export class LightUpBoard {
     const state = this.state();
     const lit = litCounts(state);
     const mistakes = this.showMistakes() ? findMistakes(state, lit) : null;
-    const drag = this.drag();
-    const dragged = new Set(drag?.squares.map((p) => p.y * state.w + p.x));
+    const swipe = this.swipe();
+    const swiped = swipe ? swipe.y * state.w + swipe.x : -1;
 
     const blacks: { x: number; y: number; number: number | null; wrong: boolean }[] = [];
     const litSquares: Point[] = [];
@@ -89,8 +89,8 @@ export class LightUpBoard {
       if (lit[i] > 0) litSquares.push({ x, y });
       const mark = state.marks[i];
       if (mark === LIGHT) lights.push({ x, y, wrong: !!mistakes?.lights.has(i) });
-      else if (mark === DOT) dots.push({ x, y, going: !!drag?.erasing && dragged.has(i) });
-      else if (mark === EMPTY && drag && !drag.erasing && dragged.has(i)) newDots.push({ x, y });
+      else if (mark === DOT) dots.push({ x, y, going: i === swiped });
+      else if (mark === EMPTY && i === swiped) newDots.push({ x, y });
     });
     return { blacks, litSquares, lights, dots, newDots };
   });
@@ -100,26 +100,22 @@ export class LightUpBoard {
     const hint = this.hint();
     if (!hint) return null;
     const state = this.state();
-    const centres = hint.squares.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }));
-    // A swipe: a short stroke across the middle of the one square.
-    const stroke =
-      hint.gesture === 'swipe'
-        ? [-0.22, 0.22].map((dx) => ({ x: centres[0].x + dx, y: centres[0].y }))
-        : centres;
+    const centre = { x: hint.square.x + 0.5, y: hint.square.y + 0.5 };
     return {
-      squares: hint.squares.filter((p) => state.squares[p.y * state.w + p.x] === WHITE),
+      square: state.squares[hint.square.y * state.w + hint.square.x] === WHITE ? hint.square : null,
       gesture: hint.gesture,
-      centre: centres[0],
-      path: 'M ' + stroke.map((c) => `${c.x} ${c.y}`).join(' L '),
+      centre,
+      // A swipe: a short stroke across the middle of the square.
+      path: `M ${centre.x - 0.22} ${centre.y} L ${centre.x + 0.22} ${centre.y}`,
     };
   });
 
   /** A tutorial note about the hinted square, e.g. "Shines on a light". */
   protected readonly noteLabel = computed(() => {
     const hint = this.hint();
-    if (!hint?.note || this.drag()) return null;
-    const first = hint.squares[0];
-    return placeLabel(hint.note, { x: first.x, y: first.y, w: 1, h: 1 }, this.state());
+    if (!hint?.note || this.swipe()) return null;
+    const { x, y } = hint.square;
+    return placeLabel(hint.note, { x, y, w: 1, h: 1 }, this.state());
   });
 
   protected onPointerDown(event: PointerEvent): void {
@@ -132,8 +128,7 @@ export class LightUpBoard {
   protected onPointerMove(event: PointerEvent): void {
     if (!this.touch) return;
     this.touch.moveTo(this.pointUnder(event));
-    if (this.touch.isDrag)
-      this.drag.set({ squares: this.touch.squares, erasing: this.touch.erasing });
+    if (this.touch.isSwipe) this.swipe.set(this.touch.square);
   }
 
   protected onPointerUp(event: PointerEvent): void {
@@ -146,7 +141,7 @@ export class LightUpBoard {
 
   protected cancelTouch(): void {
     this.touch = null;
-    this.drag.set(null);
+    this.swipe.set(null);
   }
 
   /**

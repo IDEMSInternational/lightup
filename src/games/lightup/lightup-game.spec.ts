@@ -51,13 +51,8 @@ describe('Light Up rules', () => {
   it('is solved by the lights alone, whatever the dots', () => {
     let state = place(tutorialState(), [1, 0], [0, 1], [4, 2], [3, 3]);
     expect(isSolved(state)).toBe(false); // (2, 4) is dark
-    state = game.applyMove(state, {
-      kind: 'dot',
-      squares: [
-        { x: 2, y: 3 },
-        { x: 0, y: 4 },
-      ],
-    })!;
+    state = game.applyMove(state, { kind: 'dot', at: { x: 2, y: 3 } })!;
+    state = game.applyMove(state, { kind: 'dot', at: { x: 0, y: 4 } })!;
     state = place(state, [2, 4]);
     expect(state.completed).toBe(true);
   });
@@ -113,57 +108,32 @@ describe('Light Up play', () => {
     expect(touch(tutorialState(), [0.5, 0.5])).toBeNull();
   });
 
-  it('marks every square a drag crosses with a dot, skipping black squares and lights', () => {
-    let state = place(tutorialState(), [2, 3]);
-    // From (0, 2) along row 2 and down: crosses the black square at (2, 2) and the light at (2, 3).
-    const drag = touch(state, [0.5, 2.5], [2.5, 2.5], [2.5, 3.5]);
-    expect(drag).toEqual({
-      kind: 'dot',
-      squares: [
-        { x: 0, y: 2 },
-        { x: 1, y: 2 },
-        { x: 2, y: 2 },
-        { x: 2, y: 3 },
-      ],
-    });
-    state = game.applyMove(state, drag!)!;
-    expect(Array.from(state.marks.slice(10, 12))).toEqual([DOT, DOT]);
-    expect(state.marks[17]).toBe(LIGHT);
-  });
-
   it('dots a square with a short swipe inside it, but keeps a wobbly tap a tap', () => {
     const state = tutorialState();
-    expect(touch(state, [1.3, 3.5], [1.7, 3.5])).toEqual({
-      kind: 'dot',
-      squares: [{ x: 1, y: 3 }],
-    });
+    expect(touch(state, [1.3, 3.5], [1.7, 3.5])).toEqual({ kind: 'dot', at: { x: 1, y: 3 } });
     expect(touch(state, [1.5, 3.5], [1.6, 3.55], [1.5, 3.5])).toEqual({
       kind: 'light',
       at: { x: 1, y: 3 },
     });
-    // A short swipe on a dot takes it off.
-    const dotted = game.applyMove(state, touch(state, [1.3, 3.5], [1.7, 3.5])!)!;
-    expect(touch(dotted, [1.7, 3.5], [1.3, 3.5])).toEqual({
-      kind: 'undot',
-      squares: [{ x: 1, y: 3 }],
-    });
   });
 
-  it('follows a fast swipe through every square in between', () => {
+  it('acts only on the square where the touch starts, however far it goes', () => {
     const state = tutorialState();
-    const drag = touch(state, [0.5, 3.5], [4.5, 3.5]);
-    expect(drag?.kind === 'dot' && drag.squares.length).toBe(5);
+    expect(touch(state, [0.5, 3.5], [2.5, 3.5], [4.5, 3.5])).toEqual({
+      kind: 'dot',
+      at: { x: 0, y: 3 },
+    });
+    expect(touch(state, [0.5, 0.5], [1.5, 0.5])).toBeNull(); // starts on a black square
   });
 
-  it('takes dots off with a drag that starts on a dot, and with a tap', () => {
-    let state = game.applyMove(tutorialState(), {
-      kind: 'dot',
-      squares: [0, 1, 2, 3].map((x) => ({ x, y: 3 })),
-    })!;
-    state = game.applyMove(state, touch(state, [0.5, 3.5], [1.5, 3.5])!)!;
-    expect(Array.from(state.marks.slice(15, 19))).toEqual([EMPTY, EMPTY, DOT, DOT]);
-    state = game.applyMove(state, touch(state, [2.5, 3.5])!)!;
-    expect(Array.from(state.marks.slice(15, 19))).toEqual([EMPTY, EMPTY, EMPTY, DOT]);
+  it('takes a dot off with a swipe or a tap, and leaves a light alone when swiped', () => {
+    let state = game.applyMove(tutorialState(), { kind: 'dot', at: { x: 1, y: 3 } })!;
+    expect(touch(state, [1.7, 3.5], [1.3, 3.5])).toEqual({ kind: 'clear', at: { x: 1, y: 3 } });
+    expect(touch(state, [1.5, 3.5])).toEqual({ kind: 'clear', at: { x: 1, y: 3 } });
+    state = place(state, [2, 3]);
+    expect(touch(state, [2.3, 3.5], [2.7, 3.5])).toBeNull();
+    state = game.applyMove(state, touch(state, [1.5, 3.5])!)!;
+    expect(state.marks[16]).toBe(EMPTY);
   });
 
   it('rejects moves that change nothing', () => {
@@ -171,8 +141,8 @@ describe('Light Up play', () => {
     expect(game.applyMove(state, { kind: 'light', at: { x: 1, y: 0 } })).toBeNull();
     expect(game.applyMove(state, { kind: 'light', at: { x: 0, y: 0 } })).toBeNull(); // black
     expect(game.applyMove(state, { kind: 'clear', at: { x: 2, y: 0 } })).toBeNull();
-    expect(game.applyMove(state, { kind: 'dot', squares: [{ x: 1, y: 0 }] })).toBeNull(); // a light
-    expect(game.applyMove(state, { kind: 'undot', squares: [{ x: 2, y: 0 }] })).toBeNull();
+    expect(game.applyMove(state, { kind: 'dot', at: { x: 1, y: 0 } })).toBeNull(); // a light
+    expect(game.applyMove(state, { kind: 'dot', at: { x: 0, y: 0 } })).toBeNull(); // black
   });
 
   it('clamps touches to the board', () => {

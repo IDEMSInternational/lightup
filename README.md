@@ -1,7 +1,7 @@
 # Light Up
 
 An educational phone game from the IDEMS game studio, based on
-*Light Up* (also known as Akari) from
+_Light Up_ (also known as Akari) from
 [Simon Tatham's Portable Puzzle Collection](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/).
 
 Place lights in the white squares so that every white square is lit. A light
@@ -10,9 +10,8 @@ may shine on another. A numbered black square must have exactly that many
 lights next to it (above, below, left and right).
 
 - Tap a white square to place a light; tap a light to remove it.
-- Drag across squares to mark them with a dot ("no light here"), or swipe
-  a little inside one square to dot just that one; a drag that starts on a
-  dot takes dots off instead, and a tap removes one. Dots are
+- Swipe a little inside a square to mark it with a dot ("no light here");
+  a swipe or a tap on a dot removes it. Dots are
   notes only: the puzzle is solved by the lights alone.
 - Sizes 5×5 to 10×10, or a custom size up to 15×15, at Easy, Medium and Hard
   (the original's Easy, Tricky and Hard). Not 4×4: the original generator can

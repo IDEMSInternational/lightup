@@ -14,40 +14,35 @@ describe('Light Up tutorial', () => {
   it('can be played through from start to finish', () => {
     const run = new TutorialRun(game, tutorial);
 
-    // 1: the two lights next to the corner 2, one after the other. Other moves are ignored.
-    expect(run.hint).toEqual({ squares: [{ x: 1, y: 0 }], gesture: 'tap' });
+    // 1: the first light. Other moves are ignored.
+    expect(run.hint).toEqual({ square: { x: 1, y: 0 }, gesture: 'tap' });
     expect(run.move({ kind: 'light', at: { x: 2, y: 0 } })).toBe('refused');
-    expect(run.move({ kind: 'light', at: { x: 1, y: 0 } })).toBe('applied');
-    expect(run.hint).toEqual({ squares: [{ x: 0, y: 1 }], gesture: 'tap' });
+    expect(run.move({ kind: 'light', at: { x: 1, y: 0 } })).toBe('step-done');
+    expect(run.next()).toBe(true);
+
+    // 2: the corner 2's other light.
+    expect(run.hint).toEqual({ square: { x: 0, y: 1 }, gesture: 'tap' });
     expect(run.move({ kind: 'light', at: { x: 0, y: 1 } })).toBe('step-done');
     expect(run.next()).toBe(true);
 
-    // 2: the (wrong) light in the first light's row.
+    // 3: the (wrong) light in the first light's row.
     expect(run.move({ kind: 'light', at: { x: 3, y: 0 } })).toBe('step-done');
     expect(run.next()).toBe(true);
 
-    // 3: tap it to remove it; tapping elsewhere is ignored.
+    // 4: tap it to remove it; tapping elsewhere is ignored.
     expect(run.hint?.note).toBe('Shines on a light');
     expect(run.move({ kind: 'clear', at: { x: 1, y: 0 } })).toBe('refused');
     expect(run.move({ kind: 'clear', at: { x: 3, y: 0 } })).toBe('step-done');
     expect(run.next()).toBe(true);
 
-    // 4: dots on the 0's neighbours, in one drag over the 0.
-    expect(run.move({ kind: 'dot', squares: [{ x: 3, y: 4 }] })).toBe('refused');
-    const drag = [
-      { x: 3, y: 4 },
-      { x: 4, y: 4 },
-      { x: 4, y: 3 },
-    ];
-    expect(run.move({ kind: 'dot', squares: drag })).toBe('step-done');
+    // 5: dots on the 0's two neighbours, one swipe each.
+    expect(run.hint).toEqual({ square: { x: 3, y: 4 }, gesture: 'swipe' });
+    expect(run.move({ kind: 'dot', at: { x: 2, y: 4 } })).toBe('refused');
+    expect(run.move({ kind: 'dot', at: { x: 3, y: 4 } })).toBe('applied');
+    expect(run.hint).toEqual({ square: { x: 4, y: 3 }, gesture: 'swipe' });
+    expect(run.move({ kind: 'dot', at: { x: 4, y: 3 } })).toBe('step-done');
     expect(run.state.marks[23]).toBe(DOT);
     expect(run.state.marks[19]).toBe(DOT);
-    expect(run.next()).toBe(true);
-
-    // 5: a dot on one square, the already-lit (2, 0), with a short swipe.
-    expect(run.hint).toEqual({ squares: [{ x: 2, y: 0 }], gesture: 'swipe' });
-    expect(run.move({ kind: 'dot', squares: [{ x: 1, y: 1 }] })).toBe('refused');
-    expect(run.move({ kind: 'dot', squares: [{ x: 2, y: 0 }] })).toBe('step-done');
     expect(run.next()).toBe(true);
 
     // 6: finish freely.

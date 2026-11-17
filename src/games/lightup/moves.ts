@@ -3,12 +3,10 @@ import { DOT, EMPTY, LIGHT, LightUpState, Point, isSolved, isWhite } from './sta
 export type LightUpMove =
   /** Put a light on an empty white square (a tap). */
   | { kind: 'light'; at: Point }
-  /** Take a light or a dot off a square (a tap). */
+  /** Take a light or a dot off a square (a tap, or a swipe on a dot). */
   | { kind: 'clear'; at: Point }
-  /** Put dots on the empty white squares among these (a drag). */
-  | { kind: 'dot'; squares: readonly Point[] }
-  /** Take the dots off these squares (a drag that starts on a dot). */
-  | { kind: 'undot'; squares: readonly Point[] }
+  /** Put a dot on an empty white square (a short swipe). */
+  | { kind: 'dot'; at: Point }
   /** Replace everything with the solution's lights (marks the game as cheated). */
   | { kind: 'solve'; lights: readonly Point[] };
 
@@ -31,18 +29,10 @@ export function applyMove(state: LightUpState, move: LightUpMove): LightUpState 
       marks[i] = EMPTY;
       break;
     }
-    case 'dot':
-    case 'undot': {
-      const [from, to] = move.kind === 'dot' ? [EMPTY, DOT] : [DOT, EMPTY];
-      let changed = false;
-      for (const p of move.squares) {
-        const i = index(p);
-        if (i >= 0 && marks[i] === from) {
-          marks[i] = to;
-          changed = true;
-        }
-      }
-      if (!changed) return null;
+    case 'dot': {
+      const i = index(move.at);
+      if (i < 0 || marks[i] !== EMPTY) return null;
+      marks[i] = DOT;
       break;
     }
     case 'solve': {

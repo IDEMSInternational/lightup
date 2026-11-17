@@ -39,7 +39,7 @@
   }
 
   @if (hintView(); as h) {
-    @for (q of h.squares; track $index) {
+    @if (h.square; as q) {
       <rect
         class="board-hint"
         [attr.x]="q.x + 0.07"
@@ -73,8 +73,8 @@
   }
 
   @if (hintView(); as h) {
-    @if (!drag()) {
-      @if (h.gesture !== 'tap') {
+    @if (!swipe()) {
+      @if (h.gesture === 'swipe') {
         <circle class="board-finger" r="0.22">
           <animateMotion
             [attr.path]="h.path"

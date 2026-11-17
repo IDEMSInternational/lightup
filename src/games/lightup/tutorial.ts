@@ -4,14 +4,10 @@ import { LightUpMove } from './moves';
 import { EASY, LightUpParams, defaultParams } from './params';
 import { DOT, LIGHT, LightUpState, Point } from './state';
 
-/**
- * Guidance on the board: a square to tap, a square to swipe a little
- * inside, or squares to drag across (in order, possibly passing over black
- * squares), with an optional note.
- */
+/** Guidance on the board: a square to tap or swipe on, with an optional note. */
 export interface LightUpHint {
-  squares: readonly Point[];
-  gesture: 'tap' | 'swipe' | 'drag';
+  square: Point;
+  gesture: 'tap' | 'swipe';
   note?: string;
 }
 
@@ -36,32 +32,24 @@ const SQUARES = [
   W, W, W, W, 0,
 ];
 
-const CORNER_LIGHTS: Point[] = [
-  { x: 1, y: 0 },
-  { x: 0, y: 1 },
-];
+/** The corner 2's neighbours: the first light, then the second. */
+const FIRST_LIGHT: Point = { x: 1, y: 0 };
+const SECOND_LIGHT: Point = { x: 0, y: 1 };
 /** A deliberate mistake: a light in the first light's row. */
 const CLASHING: Point = { x: 3, y: 0 };
-/** The 0's neighbours, and the drag across them (over the 0). */
+/** The 0's neighbours, dotted one at a time. */
 const BESIDE_ZERO: Point[] = [
   { x: 3, y: 4 },
   { x: 4, y: 3 },
 ];
-const ZERO_DRAG: Point[] = [
-  { x: 3, y: 4 },
-  { x: 4, y: 4 },
-  { x: 4, y: 3 },
-];
-/** A square the first light already lights, so no light can go there. */
-const ALREADY_LIT: Point = { x: 2, y: 0 };
 
 const markAt = (state: LightUpState, p: Point) => state.marks[p.y * state.w + p.x];
 const same = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 
 /**
- * Teaches by doing, one action per step: place lights, place a wrong one,
- * remove it, mark squares with dots (several in a drag, then one with a
- * short swipe), then finish the puzzle alone.
+ * Teaches by doing, one action per step: place a light, place a second one
+ * for a number, place a wrong one, remove it, mark squares with dots, then
+ * finish the puzzle alone.
  */
 export const lightUpTutorial: Tutorial<LightUpParams, LightUpState, LightUpMove, LightUpHint> = {
   params: { ...defaultParams(), w: 5, h: 5, difficulty: EASY },
@@ -70,43 +58,41 @@ export const lightUpTutorial: Tutorial<LightUpParams, LightUpState, LightUpMove,
     {
       text:
         'Light every white square. A light shines along its row and column, up to a black square, ' +
-        'and no light may shine on another. A number tells how many lights are next to it. ' +
-        'This 2 has only two white neighbours, so both hold lights. Tap them.',
-      hint: (state) => {
-        const next = CORNER_LIGHTS.find((p) => markAt(state, p) !== LIGHT);
-        return next && { squares: [next], gesture: 'tap' };
-      },
-      expect: (move) => move.kind === 'light' && CORNER_LIGHTS.some((p) => same(p, move.at)),
-      done: (state) => CORNER_LIGHTS.every((p) => markAt(state, p) === LIGHT),
+        'and no light may shine on another. Tap here to place a light.',
+      hint: { square: FIRST_LIGHT, gesture: 'tap' },
+      expect: (move) => move.kind === 'light' && same(move.at, FIRST_LIGHT),
+      done: (state) => markAt(state, FIRST_LIGHT) === LIGHT,
+    },
+    {
+      text:
+        'A number tells how many lights are next to it. This 2 has only two white neighbours, ' +
+        'so both hold lights. Tap the other one.',
+      hint: { square: SECOND_LIGHT, gesture: 'tap' },
+      expect: (move) => move.kind === 'light' && same(move.at, SECOND_LIGHT),
+      done: (state) => markAt(state, SECOND_LIGHT) === LIGHT,
     },
     {
       text: 'Now try a light here.',
-      hint: { squares: [CLASHING], gesture: 'tap' },
+      hint: { square: CLASHING, gesture: 'tap' },
       expect: (move) => move.kind === 'light' && same(move.at, CLASHING),
       done: (state) => markAt(state, CLASHING) === LIGHT,
     },
     {
       text: 'It shines along the row onto the light at the left, so it can’t stay. Tap it to remove it.',
-      hint: { squares: [CLASHING], gesture: 'tap', note: 'Shines on a light' },
+      hint: { square: CLASHING, gesture: 'tap', note: 'Shines on a light' },
       expect: (move) => move.kind === 'clear' && same(move.at, CLASHING),
       done: (state) => markAt(state, CLASHING) !== LIGHT,
     },
     {
       text:
-        'The 0 means no lights next to it. Drag across its neighbours to mark them with dots, ' +
-        'as a reminder that no light goes there.',
-      hint: { squares: ZERO_DRAG, gesture: 'drag' },
-      expect: (move) =>
-        move.kind === 'dot' && BESIDE_ZERO.every((p) => move.squares.some((q) => same(p, q))),
+        'The 0 means no lights next to it. Swipe a little inside each of its neighbours to mark it ' +
+        'with a dot, as a reminder that no light goes there.',
+      hint: (state) => {
+        const next = BESIDE_ZERO.find((p) => markAt(state, p) !== DOT);
+        return next && { square: next, gesture: 'swipe' };
+      },
+      expect: (move) => move.kind === 'dot' && BESIDE_ZERO.some((p) => same(p, move.at)),
       done: (state) => BESIDE_ZERO.every((p) => markAt(state, p) === DOT),
-    },
-    {
-      text:
-        'This square is already lit by the light next to it, so no light can go here either. ' +
-        'To dot a single square, swipe a little inside it.',
-      hint: { squares: [ALREADY_LIT], gesture: 'swipe' },
-      expect: (move) => move.kind === 'dot' && move.squares.some((q) => same(q, ALREADY_LIT)),
-      done: (state) => markAt(state, ALREADY_LIT) === DOT,
     },
     {
       text: 'Now finish the puzzle yourself.',
