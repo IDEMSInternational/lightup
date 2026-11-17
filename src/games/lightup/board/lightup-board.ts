@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { placeLabel } from '@studio/container/board-label';
 import { WHITE } from '../description';
-import { LightUpTouch } from '../input';
+import { DEFAULT_SLOP, LightUpTouch } from '../input';
 import { LightUpMove } from '../moves';
 import { DOT, EMPTY, LIGHT, LightUpState, Point, findMistakes, litCounts } from '../state';
 import { LightUpHint } from '../tutorial';
@@ -121,7 +121,7 @@ export class LightUpBoard {
     if (event.button !== 0) return;
     event.preventDefault();
     this.svg().nativeElement.setPointerCapture(event.pointerId);
-    this.touch = new LightUpTouch(this.state(), this.pointUnder(event));
+    this.touch = new LightUpTouch(this.state(), this.pointUnder(event), this.slop());
   }
 
   protected onPointerMove(event: PointerEvent): void {
@@ -142,6 +142,17 @@ export class LightUpBoard {
   protected cancelTouch(): void {
     this.touch = null;
     this.drag.set(null);
+  }
+
+  /**
+   * How far the finger may wander and still tap, in squares: about 8 pixels
+   * (finger jitter), but never so much that a short swipe on a small square
+   * can't make a dot.
+   */
+  private slop(): number {
+    const pixelsPerSquare = this.svg().nativeElement.getScreenCTM()?.a;
+    if (!pixelsPerSquare) return DEFAULT_SLOP;
+    return Math.min(Math.max(8 / pixelsPerSquare, 0.1), 0.35);
   }
 
   /** The pointer's position on the board, in squares. */

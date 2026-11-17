@@ -14,21 +14,36 @@ export function squareAt(size: Size, x: number, y: number): Point {
 const STEP = 0.25;
 
 /**
+ * How far (in squares) the finger may wander and still make a tap. Further,
+ * even inside one square, makes a drag: a short swipe puts a dot on a square.
+ */
+export const DEFAULT_SLOP = 0.25;
+
+/**
  * One touch on the board. A tap on an empty white square places a light;
  * a tap on a light or a dot takes it off. Dragging across squares marks
  * them with dots ("no light here"), or, if the drag starts on a dot, takes
- * the dots off the squares it crosses. Positions are in squares.
+ * the dots off the squares it crosses; a short swipe within one square
+ * counts, so a single square can be dotted without leaving it. Positions
+ * are in squares.
  */
 export class LightUpTouch {
   private readonly size: Size;
   private readonly state: LightUpState;
+  private readonly start: { x: number; y: number };
+  private readonly slop: number;
   private last: { x: number; y: number };
+  /** True once the finger has moved further than the slop from where it touched down. */
+  private moved = false;
   /** The squares touched, in order, each once. */
   private readonly path: Point[] = [];
 
-  constructor(state: LightUpState, start: { x: number; y: number }) {
+  /** `slop`: how far (in squares) the finger may move and still tap, see DEFAULT_SLOP. */
+  constructor(state: LightUpState, start: { x: number; y: number }, slop = DEFAULT_SLOP) {
     this.size = state;
     this.state = state;
+    this.start = start;
+    this.slop = slop;
     this.last = start;
     this.path.push(squareAt(state, start.x, start.y));
   }
@@ -45,11 +60,12 @@ export class LightUpTouch {
       if (!this.path.some((q) => q.x === square.x && q.y === square.y)) this.path.push(square);
     }
     this.last = p;
+    if (Math.hypot(p.x - this.start.x, p.y - this.start.y) > this.slop) this.moved = true;
   }
 
-  /** True once the touch has left its first square: a drag, not a tap. */
+  /** True once the finger has moved beyond the slop or left its first square: a drag, not a tap. */
   get isDrag(): boolean {
-    return this.path.length > 1;
+    return this.moved || this.path.length > 1;
   }
 
   /** True if this drag takes dots off (it started on a dot) rather than putting them on. */

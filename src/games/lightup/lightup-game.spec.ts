@@ -131,6 +131,24 @@ describe('Light Up play', () => {
     expect(state.marks[17]).toBe(LIGHT);
   });
 
+  it('dots a square with a short swipe inside it, but keeps a wobbly tap a tap', () => {
+    const state = tutorialState();
+    expect(touch(state, [1.3, 3.5], [1.7, 3.5])).toEqual({
+      kind: 'dot',
+      squares: [{ x: 1, y: 3 }],
+    });
+    expect(touch(state, [1.5, 3.5], [1.6, 3.55], [1.5, 3.5])).toEqual({
+      kind: 'light',
+      at: { x: 1, y: 3 },
+    });
+    // A short swipe on a dot takes it off.
+    const dotted = game.applyMove(state, touch(state, [1.3, 3.5], [1.7, 3.5])!)!;
+    expect(touch(dotted, [1.7, 3.5], [1.3, 3.5])).toEqual({
+      kind: 'undot',
+      squares: [{ x: 1, y: 3 }],
+    });
+  });
+
   it('follows a fast swipe through every square in between', () => {
     const state = tutorialState();
     const drag = touch(state, [0.5, 3.5], [4.5, 3.5]);
