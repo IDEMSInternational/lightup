@@ -1,0 +1,91 @@
+:host {
+  display: block;
+  width: 100%;
+
+  /*
+   * Lit squares are a soft yellow and lights are yellow bulbs: no reds or
+   * oranges, which are kept for "Show mistakes" and the app's buttons.
+   */
+  --lit: #fff1b8;
+  --bulb: #f7c531;
+  --bulb-edge: #a87f00;
+  --glow: rgb(247 197 49 / 0.35);
+  --black-square: #33363d;
+  --on-black: #ffffff;
+}
+
+/* The dark theme: a dim warm light, bright bulbs, black squares darker than the board. */
+:host-context([data-theme='dark']) {
+  --lit: #4a4126;
+  --bulb: #ffd54f;
+  --bulb-edge: #ffe48a;
+  --glow: rgb(255 213 79 / 0.25);
+  --black-square: #0f1012;
+  --on-black: #ebe8e2;
+}
+
+.lit {
+  fill: var(--lit);
+}
+
+.black {
+  rect {
+    fill: var(--black-square);
+  }
+
+  text {
+    font-size: 0.5px;
+    font-weight: 650;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    fill: var(--on-black);
+    pointer-events: none;
+  }
+
+  /* "Show mistakes": this number has too many lights, or can no longer get enough. */
+  &.wrong rect {
+    fill: var(--danger);
+  }
+}
+
+.light {
+  pointer-events: none;
+
+  .glow {
+    fill: var(--glow);
+  }
+
+  .bulb {
+    fill: var(--bulb);
+    stroke: var(--bulb-edge);
+    stroke-width: 0.05;
+  }
+
+  /* "Show mistakes": this light shines on another. */
+  &.wrong {
+    .glow {
+      fill: var(--danger-soft);
+    }
+
+    .bulb {
+      fill: var(--danger);
+      stroke: var(--danger);
+    }
+  }
+}
+
+.dot {
+  fill: var(--ink);
+  opacity: 0.6;
+  pointer-events: none;
+
+  /* While dragging: dots being added, and dots being taken off. */
+  &.new {
+    fill: var(--accent);
+    opacity: 0.9;
+  }
+
+  &.going {
+    opacity: 0.15;
+  }
+}

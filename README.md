@@ -1,7 +1,7 @@
 # Light Up
 
 An educational phone game from the IDEMS game studio, based on
-*Light Up* (also known as Akari) from
+_Light Up_ (also known as Akari) from
 [Simon Tatham's Portable Puzzle Collection](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/).
 
 Place lights in the white squares so that every white square is lit. A light
@@ -10,14 +10,17 @@ may shine on another. A numbered black square must have exactly that many
 lights next to it (above, below, left and right).
 
 - Tap a white square to place a light; tap a light to remove it.
-- Drag across squares to mark them with a dot ("no light here"); tap a dot to
-  remove it. Dots are notes only: the puzzle is solved by the lights alone.
+- Swipe a little inside a square to mark it with a dot ("no light here");
+  a swipe or a tap on a dot removes it. Dots are
+  notes only: the puzzle is solved by the lights alone.
+- Sizes 5×5 to 10×10, or a custom size up to 15×15, at Easy, Medium and Hard
+  (the original's Easy, Tricky and Hard). Not 4×4: the original generator can
+  never make a Hard puzzle that small.
 - An interactive tutorial on first launch (and from the **?** button).
-- Puzzles are generated on the device, by an exact port of the original
-  generator, so a game ID gives the same puzzle as the original collection.
-
-**Status:** being set up, from Rectangles. The game itself, its tutorial and
-its app icon are still to come (the icon images are still Rectangles').
+- Puzzles are generated on the device; the generator and solver are exact
+  ports of the original, so a game ID such as `7x7b20s2d1#123456789012345`
+  gives the same puzzle as the original collection. The original stores no
+  solution with a puzzle, so **Solve** uses the solver.
 
 Built with Angular and Capacitor, for Android and iOS.
 
@@ -38,7 +41,7 @@ Run `npm install` here only, never inside `games-common-core`.
 
 ```sh
 npm start              # dev server at http://localhost:4200
-npm test               # unit tests
+npm test               # unit tests, including 1,400 puzzles checked against the original
 npm run build          # production web build
 npm run apk            # Android debug APK -> LightUp.apk
 npm run aab            # Android release bundle for Google Play -> LightUp.aab
@@ -128,6 +131,13 @@ explains how to change it.
 
 ```
 src/games/lightup/          the game: no Angular except board/
+  grid.ts                   the working grid shared by generator and solver
+  generator/                puzzle generation, one file per stage
+  solver/                   deduction solver (Easy, Medium and Hard techniques)
+  state, moves, input, ...  rules and touch handling
+  tutorial.ts               the interactive tutorial's steps
+  board/                    the Angular board component (SVG)
+  testing/                  reference puzzles recorded from the original
 src/app/                    wires the game into the shared shell
 games-common-core/          shared engine and shell (submodule)
 tools/c-reference/          builds the original C generator to record
