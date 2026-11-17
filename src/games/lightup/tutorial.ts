@@ -5,12 +5,13 @@ import { EASY, LightUpParams, defaultParams } from './params';
 import { DOT, LIGHT, LightUpState, Point } from './state';
 
 /**
- * Guidance on the board: squares to tap (one) or to drag across (in
- * order, possibly passing over black squares), with an optional note.
+ * Guidance on the board: a square to tap, a square to swipe a little
+ * inside, or squares to drag across (in order, possibly passing over black
+ * squares), with an optional note.
  */
 export interface LightUpHint {
   squares: readonly Point[];
-  gesture: 'tap' | 'drag';
+  gesture: 'tap' | 'swipe' | 'drag';
   note?: string;
 }
 
@@ -51,13 +52,16 @@ const ZERO_DRAG: Point[] = [
   { x: 4, y: 4 },
   { x: 4, y: 3 },
 ];
+/** A square the first light already lights, so no light can go there. */
+const ALREADY_LIT: Point = { x: 2, y: 0 };
 
 const markAt = (state: LightUpState, p: Point) => state.marks[p.y * state.w + p.x];
 const same = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 
 /**
  * Teaches by doing, one action per step: place lights, place a wrong one,
- * remove it, mark squares with dots, then finish the puzzle alone.
+ * remove it, mark squares with dots (several in a drag, then one with a
+ * short swipe), then finish the puzzle alone.
  */
 export const lightUpTutorial: Tutorial<LightUpParams, LightUpState, LightUpMove, LightUpHint> = {
   params: { ...defaultParams(), w: 5, h: 5, difficulty: EASY },
@@ -95,6 +99,14 @@ export const lightUpTutorial: Tutorial<LightUpParams, LightUpState, LightUpMove,
       expect: (move) =>
         move.kind === 'dot' && BESIDE_ZERO.every((p) => move.squares.some((q) => same(p, q))),
       done: (state) => BESIDE_ZERO.every((p) => markAt(state, p) === DOT),
+    },
+    {
+      text:
+        'This square is already lit by the light next to it, so no light can go here either. ' +
+        'To dot a single square, swipe a little inside it.',
+      hint: { squares: [ALREADY_LIT], gesture: 'swipe' },
+      expect: (move) => move.kind === 'dot' && move.squares.some((q) => same(q, ALREADY_LIT)),
+      done: (state) => markAt(state, ALREADY_LIT) === DOT,
     },
     {
       text: 'Now finish the puzzle yourself.',

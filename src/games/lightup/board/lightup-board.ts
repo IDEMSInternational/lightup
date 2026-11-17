@@ -101,11 +101,16 @@ export class LightUpBoard {
     if (!hint) return null;
     const state = this.state();
     const centres = hint.squares.map((p) => ({ x: p.x + 0.5, y: p.y + 0.5 }));
+    // A swipe: a short stroke across the middle of the one square.
+    const stroke =
+      hint.gesture === 'swipe'
+        ? [-0.22, 0.22].map((dx) => ({ x: centres[0].x + dx, y: centres[0].y }))
+        : centres;
     return {
       squares: hint.squares.filter((p) => state.squares[p.y * state.w + p.x] === WHITE),
       gesture: hint.gesture,
       centre: centres[0],
-      path: 'M ' + centres.map((c) => `${c.x} ${c.y}`).join(' L '),
+      path: 'M ' + stroke.map((c) => `${c.x} ${c.y}`).join(' L '),
     };
   });
 

@@ -44,7 +44,13 @@ describe('Light Up tutorial', () => {
     expect(run.state.marks[19]).toBe(DOT);
     expect(run.next()).toBe(true);
 
-    // 5: finish freely.
+    // 5: a dot on one square, the already-lit (2, 0), with a short swipe.
+    expect(run.hint).toEqual({ squares: [{ x: 2, y: 0 }], gesture: 'swipe' });
+    expect(run.move({ kind: 'dot', squares: [{ x: 1, y: 1 }] })).toBe('refused');
+    expect(run.move({ kind: 'dot', squares: [{ x: 2, y: 0 }] })).toBe('step-done');
+    expect(run.next()).toBe(true);
+
+    // 6: finish freely.
     expect(run.hint).toBeUndefined();
     expect(run.move({ kind: 'light', at: { x: 4, y: 2 } })).toBe('applied');
     expect(run.move({ kind: 'light', at: { x: 3, y: 3 } })).toBe('applied');

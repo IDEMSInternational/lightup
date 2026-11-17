@@ -74,7 +74,7 @@
 
   @if (hintView(); as h) {
     @if (!drag()) {
-      @if (h.gesture === 'drag') {
+      @if (h.gesture !== 'tap') {
         <circle class="board-finger" r="0.22">
           <animateMotion
             [attr.path]="h.path"
