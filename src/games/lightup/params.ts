@@ -63,23 +63,22 @@ export function customParams(values: Readonly<Record<string, number>>): LightUpP
 }
 
 /**
- * The daily puzzles, Monday to Sunday, a mix of difficulties as in
- * Slanted: each level is gentler early in the week and harder from
- * Thursday. Easy: Easy puzzles, 5×5 to 7×7. Medium: big Easy puzzles
- * (8×8 to 9×9), then Medium ones (6×6 to 8×8). Hard: big Medium puzzles
- * (8×8 to 9×9), then Hard ones (7×7 to 9×9). Changing this changes the
- * daily puzzles for everyone (see daily.ts in the engine).
+ * The daily puzzles' sizes, Monday to Sunday, growing through the week.
+ * Each level is the difficulty of the same name (Light Up has three, so
+ * the levels match them): Easy 5×5 to 7×7, Medium 6×6 to 8×8 and Hard
+ * 7×7 to 9×9. Beat the clock uses the same sizes. Changing this changes
+ * the daily puzzles for everyone (see daily.ts in the engine).
  */
 // prettier-ignore
-const DAILY_WEEKS: [size: number, difficulty: number][][] = [
-  [[5, EASY], [5, EASY], [6, EASY], [6, EASY], [6, EASY], [7, EASY], [7, EASY]],
-  [[8, EASY], [8, EASY], [9, EASY], [6, MEDIUM], [7, MEDIUM], [7, MEDIUM], [8, MEDIUM]],
-  [[8, MEDIUM], [9, MEDIUM], [9, MEDIUM], [7, HARD], [7, HARD], [8, HARD], [9, HARD]],
+const DAILY_SIZES = [
+  [5, 5, 6, 6, 6, 7, 7],
+  [6, 6, 7, 7, 7, 8, 8],
+  [7, 7, 8, 8, 8, 9, 9],
 ];
 
 export const daily: DailySchedule<LightUpParams> = {
   firstDay: '2026-11-17',
-  levels: DAILY_WEEKS.map((week) => week.map(([n, difficulty]) => offered(n, n, difficulty))),
+  levels: DAILY_SIZES.map((week, difficulty) => week.map((n) => offered(n, n, difficulty))),
 };
 
 /** Text form, the original's full one: "7x7b20s2d0". */
