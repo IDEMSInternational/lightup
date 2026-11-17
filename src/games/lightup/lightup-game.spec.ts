@@ -3,7 +3,7 @@ import { decodeDescription, encodeDescription, validateDescription } from './des
 import { LightUpTouch, squareAt } from './input';
 import { lightUpGame as game } from './lightup-game';
 import { decodeParams, encodeParams } from './params';
-import { DOT, EMPTY, LIGHT, LightUpState, findMistakes, isSolved, litCounts } from './state';
+import { CROSS, EMPTY, LIGHT, LightUpState, findMistakes, isSolved, litCounts } from './state';
 import reference from './testing/reference-puzzles.json';
 import { lightsOn } from './testing/squares';
 import { lightUpTutorial } from './tutorial';
@@ -48,11 +48,11 @@ describe('Light Up rules', () => {
     expect(litSquares).toEqual([4, 9, 14, 19]);
   });
 
-  it('is solved by the lights alone, whatever the dots', () => {
+  it('is solved by the lights alone, whatever the crosses', () => {
     let state = place(tutorialState(), [1, 0], [0, 1], [4, 2], [3, 3]);
     expect(isSolved(state)).toBe(false); // (2, 4) is dark
-    state = game.applyMove(state, { kind: 'dot', at: { x: 2, y: 3 } })!;
-    state = game.applyMove(state, { kind: 'dot', at: { x: 0, y: 4 } })!;
+    state = game.applyMove(state, { kind: 'cross', at: { x: 2, y: 3 } })!;
+    state = game.applyMove(state, { kind: 'cross', at: { x: 0, y: 4 } })!;
     state = place(state, [2, 4]);
     expect(state.completed).toBe(true);
   });
@@ -90,7 +90,7 @@ describe('Light Up solver', () => {
       expect(solved.completed, `${ref.params}#${ref.seed}`).toBe(true);
       expect(solved.cheated).toBe(true);
     }
-  });
+  }, 30_000); // 1,400 puzzles: slow on a busy machine
 });
 
 describe('Light Up play', () => {
@@ -108,9 +108,9 @@ describe('Light Up play', () => {
     expect(touch(tutorialState(), [0.5, 0.5])).toBeNull();
   });
 
-  it('dots a square with a short swipe inside it, but keeps a wobbly tap a tap', () => {
+  it('crosses a square with a short swipe inside it, but keeps a wobbly tap a tap', () => {
     const state = tutorialState();
-    expect(touch(state, [1.3, 3.5], [1.7, 3.5])).toEqual({ kind: 'dot', at: { x: 1, y: 3 } });
+    expect(touch(state, [1.3, 3.5], [1.7, 3.5])).toEqual({ kind: 'cross', at: { x: 1, y: 3 } });
     expect(touch(state, [1.5, 3.5], [1.6, 3.55], [1.5, 3.5])).toEqual({
       kind: 'light',
       at: { x: 1, y: 3 },
@@ -120,14 +120,14 @@ describe('Light Up play', () => {
   it('acts only on the square where the touch starts, however far it goes', () => {
     const state = tutorialState();
     expect(touch(state, [0.5, 3.5], [2.5, 3.5], [4.5, 3.5])).toEqual({
-      kind: 'dot',
+      kind: 'cross',
       at: { x: 0, y: 3 },
     });
     expect(touch(state, [0.5, 0.5], [1.5, 0.5])).toBeNull(); // starts on a black square
   });
 
-  it('takes a dot off with a swipe or a tap, and leaves a light alone when swiped', () => {
-    let state = game.applyMove(tutorialState(), { kind: 'dot', at: { x: 1, y: 3 } })!;
+  it('takes a cross off with a swipe or a tap, and leaves a light alone when swiped', () => {
+    let state = game.applyMove(tutorialState(), { kind: 'cross', at: { x: 1, y: 3 } })!;
     expect(touch(state, [1.7, 3.5], [1.3, 3.5])).toEqual({ kind: 'clear', at: { x: 1, y: 3 } });
     expect(touch(state, [1.5, 3.5])).toEqual({ kind: 'clear', at: { x: 1, y: 3 } });
     state = place(state, [2, 3]);
@@ -141,8 +141,8 @@ describe('Light Up play', () => {
     expect(game.applyMove(state, { kind: 'light', at: { x: 1, y: 0 } })).toBeNull();
     expect(game.applyMove(state, { kind: 'light', at: { x: 0, y: 0 } })).toBeNull(); // black
     expect(game.applyMove(state, { kind: 'clear', at: { x: 2, y: 0 } })).toBeNull();
-    expect(game.applyMove(state, { kind: 'dot', at: { x: 1, y: 0 } })).toBeNull(); // a light
-    expect(game.applyMove(state, { kind: 'dot', at: { x: 0, y: 0 } })).toBeNull(); // black
+    expect(game.applyMove(state, { kind: 'cross', at: { x: 1, y: 0 } })).toBeNull(); // a light
+    expect(game.applyMove(state, { kind: 'cross', at: { x: 0, y: 0 } })).toBeNull(); // black
   });
 
   it('clamps touches to the board', () => {
@@ -212,5 +212,67 @@ describe('GameSession with Light Up', () => {
     expect(lightsOn(session.state)).toEqual([]);
     session.redo();
     expect(lightsOn(session.state)).toEqual([at]);
+  });
+});
+
+describe('Light Up thinking mode', () => {
+  /** A touch in thinking mode: a tap, or a short swipe if `swipe`. */
+  function think(state: LightUpState, x: number, y: number, swipe = false) {
+    const t = new LightUpTouch(state, { x: x + 0.3, y: y + 0.5 }, { thinking: true });
+    if (swipe) t.moveTo({ x: x + 0.7, y: y + 0.5 });
+    return t.finish();
+  }
+
+  it('places dotted lights and crosses that can be kept or discarded', () => {
+    let state = place(tutorialState(), [1, 0]);
+    expect(think(state, 4, 2)).toEqual({ kind: 'light', at: { x: 4, y: 2 }, tentative: true });
+    state = game.applyMove(state, think(state, 4, 2)!)!;
+    state = game.applyMove(state, think(state, 4, 3, true)!)!;
+    expect(state.marks[14]).toBe(LIGHT);
+    expect(state.marks[19]).toBe(CROSS);
+    expect(Array.from(state.tentative.keys()).filter((i) => state.tentative[i])).toEqual([14, 19]);
+
+    const kept = game.applyMove(state, { kind: 'keep-thoughts' })!;
+    expect(kept.tentative.includes(1)).toBe(false);
+    expect([kept.marks[14], kept.marks[19]]).toEqual([LIGHT, CROSS]);
+
+    const discarded = game.applyMove(state, { kind: 'discard-thoughts' })!;
+    expect(discarded.tentative.includes(1)).toBe(false);
+    expect([discarded.marks[1], discarded.marks[14], discarded.marks[19]]).toEqual([
+      LIGHT,
+      EMPTY,
+      EMPTY,
+    ]);
+
+    // Nothing to keep or discard: no move.
+    expect(game.applyMove(kept, { kind: 'discard-thoughts' })).toBeNull();
+  });
+
+  it('protects solid lights and crosses while thinking, but lets dotted ones be removed', () => {
+    let state = place(tutorialState(), [1, 0]);
+    state = game.applyMove(state, { kind: 'cross', at: { x: 2, y: 0 } })!;
+    expect(think(state, 1, 0)).toBeNull();
+    expect(think(state, 2, 0, true)).toBeNull();
+    state = game.applyMove(state, think(state, 3, 3)!)!;
+    expect(think(state, 3, 3)).toEqual({ kind: 'clear', at: { x: 3, y: 3 } });
+  });
+
+  it('counts dotted lights towards the solution, and Solve leaves no thoughts', () => {
+    let state = place(tutorialState(), [1, 0], [0, 1], [4, 2], [3, 3]);
+    state = game.applyMove(state, { kind: 'light', at: { x: 2, y: 4 }, tentative: true })!;
+    expect(state.completed).toBe(true);
+
+    const initial = game.applyMove(tutorialState(), think(tutorialState(), 2, 3)!)!;
+    const solved = game.applyMove(initial, game.solve(initial)!)!;
+    expect(solved.tentative.includes(1)).toBe(false);
+  });
+
+  it('tells squares lit only by dotted lights from surely lit ones', () => {
+    let state = place(tutorialState(), [1, 0]);
+    state = game.applyMove(state, { kind: 'light', at: { x: 4, y: 2 }, tentative: true })!;
+    const all = litCounts(state);
+    const sure = litCounts(state, true);
+    expect([all[2], sure[2]]).toEqual([1, 1]); // row 0, lit by the solid light
+    expect([all[9], sure[9]]).toEqual([1, 0]); // (4, 1), lit by the dotted light only
   });
 });

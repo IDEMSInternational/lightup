@@ -1,6 +1,6 @@
 import { WHITE } from './description';
 import { LightUpMove } from './moves';
-import { DOT, EMPTY, LightUpState, Point, Size } from './state';
+import { CROSS, EMPTY, LightUpState, Point, Size } from './state';
 
 /** The square under a position given in squares (e.g. 2.4, 0.9), clamped to the board. */
 export function squareAt(size: Size, x: number, y: number): Point {
@@ -12,30 +12,43 @@ export function squareAt(size: Size, x: number, y: number): Point {
 
 /**
  * How far (in squares) the finger may wander and still make a tap. Further
- * makes a swipe, which puts a dot on the square.
+ * makes a swipe, which puts a cross on the square.
  */
 export const DEFAULT_SLOP = 0.25;
 
 /**
  * One touch on the board, which acts on the square where it starts only.
- * A tap on an empty white square places a light; a tap on a light or a dot
- * takes it off. A short swipe puts a dot ("no light here") on an empty
- * white square, or takes a dot off. Positions are in squares.
+ * A tap on an empty white square places a light; a tap on a light or a cross
+ * takes it off. A short swipe puts a cross ("no light here") on an empty
+ * white square, or takes a cross off. Positions are in squares.
+ *
+ * In thinking mode, new lights and crosses are tentative (drawn dotted),
+ * and solid ones are protected: they can't be tapped or swiped away, so
+ * discarding a hypothesis never loses work the player was sure of.
  */
 export class LightUpTouch {
   private readonly state: LightUpState;
   private readonly start: { x: number; y: number };
   private readonly slop: number;
+  private readonly thinking: boolean;
   /** The square the touch acts on. */
   readonly square: Point;
   /** True once the finger has moved further than the slop from where it touched down. */
   private moved = false;
 
-  /** `slop`: how far (in squares) the finger may move and still tap, see DEFAULT_SLOP. */
-  constructor(state: LightUpState, start: { x: number; y: number }, slop = DEFAULT_SLOP) {
+  /**
+   * `slop`: how far (in squares) the finger may move and still tap, see
+   * DEFAULT_SLOP. `thinking`: thinking mode.
+   */
+  constructor(
+    state: LightUpState,
+    start: { x: number; y: number },
+    { slop = DEFAULT_SLOP, thinking = false } = {},
+  ) {
     this.state = state;
     this.start = start;
     this.slop = slop;
+    this.thinking = thinking;
     this.square = squareAt(state, start.x, start.y);
   }
 
@@ -54,11 +67,14 @@ export class LightUpTouch {
     const at = this.square;
     if (this.state.squares[at.y * this.state.w + at.x] !== WHITE) return null; // a black square
     const mark = this.mark;
+    const solid = mark !== EMPTY && !this.state.tentative[at.y * this.state.w + at.x];
+    if (this.thinking && solid) return null; // protected while thinking
+    const tentative = this.thinking ? { tentative: true } : {};
     if (this.isSwipe) {
-      if (mark === EMPTY) return { kind: 'dot', at };
-      return mark === DOT ? { kind: 'clear', at } : null; // a swipe leaves a light alone
+      if (mark === EMPTY) return { kind: 'cross', at, ...tentative };
+      return mark === CROSS ? { kind: 'clear', at } : null; // a swipe leaves a light alone
     }
-    return mark === EMPTY ? { kind: 'light', at } : { kind: 'clear', at };
+    return mark === EMPTY ? { kind: 'light', at, ...tentative } : { kind: 'clear', at };
   }
 
   private get mark(): number {

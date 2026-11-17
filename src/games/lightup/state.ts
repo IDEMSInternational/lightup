@@ -3,8 +3,8 @@ import { BLACK, WHITE } from './description';
 /** What the player has put on a white square. */
 export const EMPTY = 0;
 export const LIGHT = 1;
-/** A note: "no light here". Dots never count towards the solution. */
-export const DOT = 2;
+/** A note: "no light here". Crosses never count towards the solution. */
+export const CROSS = 2;
 
 export interface Point {
   x: number;
@@ -20,8 +20,14 @@ export interface Size {
 export interface LightUpState extends Size {
   /** Each square, indexed y * w + x: WHITE, BLACK, or a black square's number (0 to 4). */
   readonly squares: Int8Array;
-  /** The player's EMPTY, LIGHT or DOT on each white square (EMPTY on black ones). */
+  /** The player's EMPTY, LIGHT or CROSS on each white square (EMPTY on black ones). */
   readonly marks: Uint8Array;
+  /**
+   * 1 for each light or cross placed in thinking mode (drawn dotted): part
+   * of a hypothesis the player may keep or discard. Tentative lights still
+   * count towards the solution.
+   */
+  readonly tentative: Uint8Array;
   readonly completed: boolean;
   /** True once the player has used "Solve". */
   readonly cheated: boolean;
@@ -51,12 +57,13 @@ export function neighbours(size: Size, i: number): number[] {
 /**
  * How many lights shine on each white square: a light shines on its own
  * square and along its row and column until a black square or the edge.
+ * With `sureOnly`, tentative (thinking-mode) lights are left out.
  */
-export function litCounts(state: LightUpState): Int32Array {
+export function litCounts(state: LightUpState, sureOnly = false): Int32Array {
   const { w, h } = state;
   const counts = new Int32Array(w * h);
   state.marks.forEach((mark, i) => {
-    if (mark !== LIGHT) return;
+    if (mark !== LIGHT || (sureOnly && state.tentative[i])) return;
     counts[i]++;
     const x = i % w;
     const y = Math.floor(i / w);
@@ -90,6 +97,10 @@ export interface Mistakes {
   readonly numbers: ReadonlySet<number>;
 }
 
+/**
+ * Finds rule breaks. Tentative (thinking-mode) lights count like the
+ * others, since they count towards the solution.
+ */
 export function findMistakes(state: LightUpState, lit = litCounts(state)): Mistakes {
   const lights = new Set<number>();
   const numbers = new Set<number>();
@@ -110,7 +121,7 @@ export function findMistakes(state: LightUpState, lit = litCounts(state)): Mista
 /**
  * True when the lights solve the puzzle: every white square lit, no light
  * shining on another, and every number with exactly that many lights next
- * to it. Dots don't matter.
+ * to it. Crosses don't matter.
  */
 export function isSolved(state: LightUpState): boolean {
   const lit = litCounts(state);

@@ -21,7 +21,14 @@
   </clipPath>
   <g [attr.clip-path]="'url(#' + clipId + ')'">
     @for (q of v.litSquares; track $index) {
-      <rect class="lit" [attr.x]="q.x" [attr.y]="q.y" width="1" height="1" />
+      <rect
+        class="lit"
+        [class.maybe]="q.maybe"
+        [attr.x]="q.x"
+        [attr.y]="q.y"
+        width="1"
+        height="1"
+      />
     }
   </g>
 
@@ -51,22 +58,21 @@
     }
   }
 
-  @for (d of v.dots; track $index) {
-    <circle
-      class="dot"
+  @for (d of v.crosses; track $index) {
+    <path
+      class="cross"
       [class.going]="d.going"
-      [attr.cx]="d.x + 0.5"
-      [attr.cy]="d.y + 0.5"
-      r="0.09"
+      [class.tentative]="d.tentative"
+      [attr.d]="crossPath(d)"
     />
   }
 
-  @for (d of v.newDots; track $index) {
-    <circle class="dot new" [attr.cx]="d.x + 0.5" [attr.cy]="d.y + 0.5" r="0.09" />
+  @for (d of v.newCrosses; track $index) {
+    <path class="cross new" [class.tentative]="d.tentative" [attr.d]="crossPath(d)" />
   }
 
   @for (l of v.lights; track $index) {
-    <g class="light" [class.wrong]="l.wrong">
+    <g class="light" [class.wrong]="l.wrong" [class.tentative]="l.tentative">
       <circle class="glow" [attr.cx]="l.x + 0.5" [attr.cy]="l.y + 0.5" r="0.4" />
       <circle class="bulb" [attr.cx]="l.x + 0.5" [attr.cy]="l.y + 0.5" r="0.27" />
     </g>

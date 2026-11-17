@@ -49,6 +49,7 @@ export const lightUpGame: PuzzleGame<LightUpParams, LightUpState, LightUpMove> =
       h: params.h,
       squares,
       marks: new Uint8Array(squares.length),
+      tentative: new Uint8Array(squares.length),
       completed: false,
       cheated: false,
     };

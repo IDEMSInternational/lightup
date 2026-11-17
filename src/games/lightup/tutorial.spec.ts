@@ -1,6 +1,6 @@
 import { TutorialRun } from '@studio/engine/tutorial';
 import { lightUpGame as game } from './lightup-game';
-import { DOT } from './state';
+import { CROSS } from './state';
 import { lightUpTutorial as tutorial } from './tutorial';
 
 describe('Light Up tutorial', () => {
@@ -35,14 +35,14 @@ describe('Light Up tutorial', () => {
     expect(run.move({ kind: 'clear', at: { x: 3, y: 0 } })).toBe('step-done');
     expect(run.next()).toBe(true);
 
-    // 5: dots on the 0's two neighbours, one swipe each.
+    // 5: crosses on the 0's two neighbours, one swipe each.
     expect(run.hint).toEqual({ square: { x: 3, y: 4 }, gesture: 'swipe' });
-    expect(run.move({ kind: 'dot', at: { x: 2, y: 4 } })).toBe('refused');
-    expect(run.move({ kind: 'dot', at: { x: 3, y: 4 } })).toBe('applied');
+    expect(run.move({ kind: 'cross', at: { x: 2, y: 4 } })).toBe('refused');
+    expect(run.move({ kind: 'cross', at: { x: 3, y: 4 } })).toBe('applied');
     expect(run.hint).toEqual({ square: { x: 4, y: 3 }, gesture: 'swipe' });
-    expect(run.move({ kind: 'dot', at: { x: 4, y: 3 } })).toBe('step-done');
-    expect(run.state.marks[23]).toBe(DOT);
-    expect(run.state.marks[19]).toBe(DOT);
+    expect(run.move({ kind: 'cross', at: { x: 4, y: 3 } })).toBe('step-done');
+    expect(run.state.marks[23]).toBe(CROSS);
+    expect(run.state.marks[19]).toBe(CROSS);
     expect(run.next()).toBe(true);
 
     // 6: finish freely.

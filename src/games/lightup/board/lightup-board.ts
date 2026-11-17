@@ -12,7 +12,7 @@ import { placeLabel } from '@studio/container/board-label';
 import { WHITE } from '../description';
 import { DEFAULT_SLOP, LightUpTouch } from '../input';
 import { LightUpMove } from '../moves';
-import { DOT, EMPTY, LIGHT, LightUpState, Point, findMistakes, litCounts } from '../state';
+import { CROSS, EMPTY, LIGHT, LightUpState, Point, findMistakes, litCounts } from '../state';
 import { LightUpHint } from '../tutorial';
 
 /** Boards created so far, for unique ids. */
@@ -36,6 +36,8 @@ export class LightUpBoard {
   readonly state = input.required<LightUpState>();
   /** Tutorial guidance: highlights squares and animates the gesture. */
   readonly hint = input<LightUpHint | null>(null);
+  /** Thinking mode: new lights and crosses are tentative, drawn dotted. */
+  readonly thinking = input(false);
   /** Show mistakes: lights shining on each other, and numbers that can't be right, in red. */
   readonly showMistakes = input(false);
   readonly move = output<LightUpMove>();
@@ -44,7 +46,7 @@ export class LightUpBoard {
   private touch: LightUpTouch | null = null;
   /** The id of this board's clip path (unique: the tutorial and the game may both have a board). */
   protected readonly clipId = `lightup-paper-${++boards}`;
-  /** The square of the swipe in progress, which gains or loses a dot when the finger lifts. */
+  /** The square of the swipe in progress, which gains or loses a cross when the finger lifts. */
   protected readonly swipe = signal<Point | null>(null);
 
   protected readonly viewBox = computed(() => {
@@ -64,15 +66,17 @@ export class LightUpBoard {
   protected readonly view = computed(() => {
     const state = this.state();
     const lit = litCounts(state);
+    const surelyLit = litCounts(state, true);
     const mistakes = this.showMistakes() ? findMistakes(state, lit) : null;
     const swipe = this.swipe();
     const swiped = swipe ? swipe.y * state.w + swipe.x : -1;
 
     const blacks: { x: number; y: number; number: number | null; wrong: boolean }[] = [];
-    const litSquares: Point[] = [];
-    const lights: { x: number; y: number; wrong: boolean }[] = [];
-    const dots: { x: number; y: number; going: boolean }[] = [];
-    const newDots: Point[] = [];
+    /** `maybe`: lit only by tentative lights. */
+    const litSquares: { x: number; y: number; maybe: boolean }[] = [];
+    const lights: { x: number; y: number; wrong: boolean; tentative: boolean }[] = [];
+    const crosses: { x: number; y: number; going: boolean; tentative: boolean }[] = [];
+    const newCrosses: { x: number; y: number; tentative: boolean }[] = [];
 
     state.squares.forEach((square, i) => {
       const x = i % state.w;
@@ -86,13 +90,15 @@ export class LightUpBoard {
         });
         return;
       }
-      if (lit[i] > 0) litSquares.push({ x, y });
+      if (lit[i] > 0) litSquares.push({ x, y, maybe: surelyLit[i] === 0 });
       const mark = state.marks[i];
-      if (mark === LIGHT) lights.push({ x, y, wrong: !!mistakes?.lights.has(i) });
-      else if (mark === DOT) dots.push({ x, y, going: i === swiped });
-      else if (mark === EMPTY && i === swiped) newDots.push({ x, y });
+      const tentative = state.tentative[i] === 1;
+      if (mark === LIGHT) lights.push({ x, y, wrong: !!mistakes?.lights.has(i), tentative });
+      else if (mark === CROSS) crosses.push({ x, y, going: i === swiped, tentative });
+      else if (mark === EMPTY && i === swiped)
+        newCrosses.push({ x, y, tentative: this.thinking() });
     });
-    return { blacks, litSquares, lights, dots, newDots };
+    return { blacks, litSquares, lights, crosses, newCrosses };
   });
 
   /** Hint outlines on the white squares, plus where the animated finger goes. */
@@ -118,11 +124,22 @@ export class LightUpBoard {
     return placeLabel(hint.note, { x, y, w: 1, h: 1 }, this.state());
   });
 
+  /** A small cross in the middle of the square at (x, y): "no light here". */
+  protected crossPath({ x, y }: Point): string {
+    const cx = x + 0.5;
+    const cy = y + 0.5;
+    const r = 0.13;
+    return `M ${cx - r} ${cy - r} L ${cx + r} ${cy + r} M ${cx + r} ${cy - r} L ${cx - r} ${cy + r}`;
+  }
+
   protected onPointerDown(event: PointerEvent): void {
     if (event.button !== 0) return;
     event.preventDefault();
     this.svg().nativeElement.setPointerCapture(event.pointerId);
-    this.touch = new LightUpTouch(this.state(), this.pointUnder(event), this.slop());
+    this.touch = new LightUpTouch(this.state(), this.pointUnder(event), {
+      slop: this.slop(),
+      thinking: this.thinking(),
+    });
   }
 
   protected onPointerMove(event: PointerEvent): void {
@@ -147,7 +164,7 @@ export class LightUpBoard {
   /**
    * How far the finger may wander and still tap, in squares: about 8 pixels
    * (finger jitter), but never so much that a short swipe on a small square
-   * can't make a dot.
+   * can't make a cross.
    */
   private slop(): number {
     const pixelsPerSquare = this.svg().nativeElement.getScreenCTM()?.a;
