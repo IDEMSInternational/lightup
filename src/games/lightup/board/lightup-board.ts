@@ -9,10 +9,12 @@ import {
   viewChild,
 } from '@angular/core';
 import { placeLabel } from '@studio/container/board-label';
+import { BoardPointer } from '@studio/container/board-pointer';
+import { Point } from '@studio/engine/geometry';
 import { WHITE } from '../description';
 import { DEFAULT_SLOP, LightUpTouch } from '../input';
 import { LightUpMove } from '../moves';
-import { CROSS, EMPTY, LIGHT, LightUpState, Point, findMistakes, litCounts } from '../state';
+import { CROSS, EMPTY, LIGHT, LightUpState, findMistakes, litCounts } from '../state';
 import { LightUpHint } from '../tutorial';
 
 /** Boards created so far, for unique ids. */
@@ -43,7 +45,8 @@ export class LightUpBoard {
   readonly move = output<LightUpMove>();
 
   private readonly svg = viewChild.required<ElementRef<SVGSVGElement>>('svg');
-  private touch: LightUpTouch | null = null;
+  /** The finger on the board. */
+  private readonly pointer = new BoardPointer<LightUpTouch>(() => this.svg().nativeElement);
   /** The id of this board's clip path (unique: the tutorial and the game may both have a board). */
   protected readonly clipId = `lightup-paper-${++boards}`;
   /** The square of the swipe in progress, which gains or loses a cross when the finger lifts. */
@@ -133,31 +136,25 @@ export class LightUpBoard {
   }
 
   protected onPointerDown(event: PointerEvent): void {
-    if (event.button !== 0) return;
-    event.preventDefault();
-    this.svg().nativeElement.setPointerCapture(event.pointerId);
-    this.touch = new LightUpTouch(this.state(), this.pointUnder(event), {
-      slop: this.slop(),
-      thinking: this.thinking(),
-    });
+    this.pointer.down(
+      event,
+      (at) => new LightUpTouch(this.state(), at, { slop: this.slop(), thinking: this.thinking() }),
+    );
   }
 
   protected onPointerMove(event: PointerEvent): void {
-    if (!this.touch) return;
-    this.touch.moveTo(this.pointUnder(event));
-    if (this.touch.isSwipe) this.swipe.set(this.touch.square);
+    const touch = this.pointer.move(event);
+    if (touch?.isSwipe) this.swipe.set(touch.square);
   }
 
   protected onPointerUp(event: PointerEvent): void {
-    if (!this.touch) return;
-    this.touch.moveTo(this.pointUnder(event));
-    const move = this.touch.finish();
+    const move = this.pointer.up(event)?.finish();
     this.cancelTouch();
     if (move) this.move.emit(move);
   }
 
   protected cancelTouch(): void {
-    this.touch = null;
+    this.pointer.cancel();
     this.swipe.set(null);
   }
 
@@ -167,15 +164,8 @@ export class LightUpBoard {
    * can't make a cross.
    */
   private slop(): number {
-    const pixelsPerSquare = this.svg().nativeElement.getScreenCTM()?.a;
+    const pixelsPerSquare = this.pointer.pixelsPerSquare();
     if (!pixelsPerSquare) return DEFAULT_SLOP;
     return Math.min(Math.max(8 / pixelsPerSquare, 0.1), 0.35);
-  }
-
-  /** The pointer's position on the board, in squares. */
-  private pointUnder(event: PointerEvent): { x: number; y: number } {
-    const matrix = this.svg().nativeElement.getScreenCTM()?.inverse();
-    const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix);
-    return { x: p.x, y: p.y };
   }
 }

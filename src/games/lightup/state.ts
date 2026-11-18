@@ -1,3 +1,4 @@
+import { Size } from '@studio/engine/geometry';
 import { BLACK, WHITE } from './description';
 
 /** What the player has put on a white square. */
@@ -5,16 +6,6 @@ export const EMPTY = 0;
 export const LIGHT = 1;
 /** A note: "no light here". Crosses never count towards the solution. */
 export const CROSS = 2;
-
-export interface Point {
-  x: number;
-  y: number;
-}
-
-export interface Size {
-  w: number;
-  h: number;
-}
 
 /** A position in a game of Light Up. Treated as immutable. */
 export interface LightUpState extends Size {

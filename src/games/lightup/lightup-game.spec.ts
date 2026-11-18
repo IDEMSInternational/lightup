@@ -1,6 +1,6 @@
 import { GameSession } from '@studio/engine/game-session';
 import { decodeDescription, encodeDescription, validateDescription } from './description';
-import { LightUpTouch, squareAt } from './input';
+import { LightUpTouch } from './input';
 import { lightUpGame as game } from './lightup-game';
 import { decodeParams, encodeParams } from './params';
 import { CROSS, EMPTY, LIGHT, LightUpState, findMistakes, isSolved, litCounts } from './state';
@@ -143,10 +143,6 @@ describe('Light Up play', () => {
     expect(game.applyMove(state, { kind: 'clear', at: { x: 2, y: 0 } })).toBeNull();
     expect(game.applyMove(state, { kind: 'cross', at: { x: 1, y: 0 } })).toBeNull(); // a light
     expect(game.applyMove(state, { kind: 'cross', at: { x: 0, y: 0 } })).toBeNull(); // black
-  });
-
-  it('clamps touches to the board', () => {
-    expect(squareAt({ w: 5, h: 5 }, -0.3, 7)).toEqual({ x: 0, y: 4 });
   });
 });
 

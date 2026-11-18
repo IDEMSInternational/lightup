@@ -1,4 +1,5 @@
-import { LIGHT, LightUpState, Point, isWhite } from '../state';
+import { Point } from '@studio/engine/geometry';
+import { LIGHT, LightUpState, isWhite } from '../state';
 
 /** For tests: the white squares of a puzzle, row by row. */
 export function whiteSquares(state: LightUpState): Point[] {
