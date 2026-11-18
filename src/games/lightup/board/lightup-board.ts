@@ -8,7 +8,9 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { BoardFinger } from '@studio/container/board-finger';
 import { placeLabel } from '@studio/container/board-label';
+import { BoardLabelView } from '@studio/container/board-label-view';
 import { BoardPointer } from '@studio/container/board-pointer';
 import { Point } from '@studio/engine/geometry';
 import { WHITE } from '../description';
@@ -30,6 +32,7 @@ interface Segment {
 /** Board for Light Up, drawn as SVG in square units. Emits moves; never changes state itself. */
 @Component({
   selector: 'lightup-board',
+  imports: [BoardFinger, BoardLabelView],
   templateUrl: './lightup-board.html',
   styleUrl: './lightup-board.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -112,10 +115,15 @@ export class LightUpBoard {
     const centre = { x: hint.square.x + 0.5, y: hint.square.y + 0.5 };
     return {
       square: state.squares[hint.square.y * state.w + hint.square.x] === WHITE ? hint.square : null,
-      gesture: hint.gesture,
-      centre,
-      // A swipe: a short stroke across the middle of the square.
-      path: `M ${centre.x - 0.22} ${centre.y} L ${centre.x + 0.22} ${centre.y}`,
+      // A swipe: a short stroke across the middle of the square; or a tap on it.
+      along:
+        hint.gesture === 'swipe'
+          ? [
+              { x: centre.x - 0.22, y: centre.y },
+              { x: centre.x + 0.22, y: centre.y },
+            ]
+          : null,
+      tap: hint.gesture === 'swipe' ? null : centre,
     };
   });
 
