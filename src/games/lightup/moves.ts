@@ -1,4 +1,5 @@
-import { CROSS, EMPTY, LIGHT, LightUpState, Point, isSolved, isWhite } from './state';
+import { Point } from '@studio/engine/geometry';
+import { CROSS, EMPTY, LIGHT, LightUpState, isSolved, isWhite } from './state';
 
 export type LightUpMove =
   /** Put a light on an empty white square (a tap); dotted if `tentative` (thinking mode). */

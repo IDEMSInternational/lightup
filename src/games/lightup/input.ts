@@ -1,14 +1,7 @@
+import { Point, Size, squareAt } from '@studio/engine/geometry';
 import { WHITE } from './description';
 import { LightUpMove } from './moves';
-import { CROSS, EMPTY, LightUpState, Point, Size } from './state';
-
-/** The square under a position given in squares (e.g. 2.4, 0.9), clamped to the board. */
-export function squareAt(size: Size, x: number, y: number): Point {
-  return {
-    x: Math.min(Math.max(Math.floor(x), 0), size.w - 1),
-    y: Math.min(Math.max(Math.floor(y), 0), size.h - 1),
-  };
-}
+import { CROSS, EMPTY, LightUpState } from './state';
 
 /**
  * How far (in squares) the finger may wander and still make a tap. Further

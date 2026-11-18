@@ -1,8 +1,9 @@
 import { Tutorial } from '@studio/engine/tutorial';
+import { Point } from '@studio/engine/geometry';
 import { BLACK, WHITE, encodeDescription } from './description';
 import { LightUpMove } from './moves';
 import { EASY, LightUpParams, defaultParams } from './params';
-import { CROSS, LIGHT, LightUpState, Point } from './state';
+import { CROSS, LIGHT, LightUpState } from './state';
 
 /** Guidance on the board: a square to tap or swipe on, with an optional note. */
 export interface LightUpHint {

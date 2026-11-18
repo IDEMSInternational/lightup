@@ -1,7 +1,7 @@
+import { Point, Size } from '@studio/engine/geometry';
 import { BLACK, WHITE } from './description';
 import { F_BLACK, F_IMPOSSIBLE, F_LIGHT, F_NUMBERED, Grid } from './grid';
 import { SOLVE_ALLOW_RECURSE, SOLVE_DISCOUNT_SETS, solve } from './solver/solver';
-import { Point, Size } from './state';
 
 /** A working grid for the solver, holding the puzzle's black squares and numbers. */
 export function gridFromSquares(size: Size, squares: ArrayLike<number>): Grid {
