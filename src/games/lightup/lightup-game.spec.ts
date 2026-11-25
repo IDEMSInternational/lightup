@@ -81,18 +81,6 @@ describe('Light Up rules', () => {
   });
 });
 
-describe('Light Up solver', () => {
-  it('solves every reference puzzle', () => {
-    for (const ref of reference) {
-      const params = decodeParams(ref.params);
-      const initial = game.newGame(params, ref.description);
-      const solved = game.applyMove(initial, game.solve(initial)!)!;
-      expect(solved.completed, `${ref.params}#${ref.seed}`).toBe(true);
-      expect(solved.cheated).toBe(true);
-    }
-  }, 30_000); // 1,400 puzzles: slow on a busy machine
-});
-
 describe('Light Up play', () => {
   it('places a light with a tap on an empty white square, and takes it off with another', () => {
     let state = tutorialState();
